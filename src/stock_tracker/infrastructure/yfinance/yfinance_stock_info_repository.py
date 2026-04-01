@@ -107,33 +107,33 @@ class YfinanceStockInfoRepository(StockInfoRepository):
             recent_splits = splits[splits.index >= cutoff_2y] if splits is not None and not splits.empty else None
             if recent_splits is not None and not recent_splits.empty:
                 last_split_date = recent_splits.index[-1]
-                split_ratio = Decimal(str(recent_splits.iloc[-1]))
                 post_split = dividends[dividends.index > last_split_date]
 
                 if post_split.empty or post_split.sum() == 0:
-                    # 分割直後で実績なし → .dividends は調整済みのため
-                    # 通常の12ヶ月ウィンドウにフォールバック
-                    cutoff_1y = now - timedelta(days=365)
-                    trailing = dividends[dividends.index >= cutoff_1y]
-                    if trailing.empty:
-                        return None
-                    annual_div = Decimal(str(trailing.sum()))
+                    # 分割直後で実績なし → .dividends は調整済みのため 通常の12ヶ月ウィンドウにフォールバック
+                    annual_div = cls._trailing_12m_div(dividends, now)
                 else:
                     days_since_split = (now - last_split_date).days
                     if days_since_split <= 0:
                         return None
                     annual_div = Decimal(str(post_split.sum())) * Decimal(365) / Decimal(days_since_split)
             else:
-                cutoff_1y = now - timedelta(days=365)
-                trailing = dividends[dividends.index >= cutoff_1y]
-                if trailing.empty:
-                    return None
-                annual_div = Decimal(str(trailing.sum()))
+                annual_div = cls._trailing_12m_div(dividends, now)
 
+            if annual_div is None:
+                return None
             current_price = Decimal(str(price))
             return Percentage(annual_div / current_price)
         except Exception:
             return None
+
+    @staticmethod
+    def _trailing_12m_div(dividends: Any, now: datetime) -> Optional[Decimal]:
+        cutoff_1y = now - timedelta(days=365)
+        trailing = dividends[dividends.index >= cutoff_1y]
+        if trailing.empty:
+            return None
+        return Decimal(str(trailing.sum()))
 
     @staticmethod
     def _compute_equity_ratio(yf_ticker: yf.Ticker) -> Optional[Percentage]:

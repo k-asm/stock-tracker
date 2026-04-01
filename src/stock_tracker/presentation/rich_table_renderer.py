@@ -145,21 +145,19 @@ class RichTableRenderer:
 
         self._console.print()
         self._console.print("[bold]ポートフォリオ合計[/bold]")
-        self._console.print(
-            f"  投資額合計  : [white]{_fmt_money_jpy(total_cost)}[/white]"
-        )
+        self._console.print("  投資額合計  : ", _fmt_money_jpy(total_cost), sep="")
         if total_value is not None:
-            self._console.print(
-                f"  評価額合計  : [white]{_fmt_money_jpy(total_value)}[/white]"
-            )
+            self._console.print("  評価額合計  : ", _fmt_money_jpy(total_value), sep="")
         if total_gain is not None:
             self._console.print(
-                f"  評価損益合計: {_fmt_gain_loss(total_gain)}"
-                f"  ({_fmt_gain_loss_pct(total_gain_pct)})"
+                "  評価損益合計: ",
+                _fmt_gain_loss(total_gain),
+                "  (",
+                _fmt_gain_loss_pct(total_gain_pct),
+                ")",
+                sep="",
             )
-        self._console.print(
-            f"  銘柄数      : [white]{len(rows)}銘柄[/white]"
-        )
+        self._console.print(f"  銘柄数      : {len(rows)}銘柄")
         self._console.print()
         self._console.print(
             "[dim]* 現在値は前営業日終値の場合があります[/dim]"

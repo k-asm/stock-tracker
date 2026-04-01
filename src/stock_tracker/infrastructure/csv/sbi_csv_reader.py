@@ -93,45 +93,42 @@ class SbiCsvHoldingsRepository(HoldingsRepository):
         self, lines: list[str]
     ) -> tuple[Optional[int], Optional[str]]:
         for i, line in enumerate(lines):
-            if _HEADER_FORMAT_A in line:
-                return i, "A"
+            # Check Format B before Format A: "銘柄コード" is a substring of "銘柄（コード）"
             if _HEADER_FORMAT_B in line:
                 return i, "B"
+            if _HEADER_FORMAT_A in line:
+                return i, "A"
         return None, None
 
     def _parse_row_format_a(self, row: dict) -> Optional[Holding]:
         code = row.get(_A_CODE, "").strip()
         if not code or not code.isdigit():
             return None
-
         name = row.get(_A_NAME, "").strip()
         shares = self._parse_decimal(row.get(_A_SHARES, ""))
         avg_cost = self._parse_decimal(row.get(_A_AVG_COST, ""))
-
-        if shares is None or avg_cost is None or shares == 0:
-            return None
-
-        return Holding(
-            ticker=Ticker.from_sbi_code(code),
-            name=name,
-            shares=shares,
-            average_cost=Money(avg_cost, Currency.JPY),
-        )
+        return self._build_holding(code, name, shares, avg_cost)
 
     def _parse_row_format_b(self, row: dict) -> Optional[Holding]:
         code_name = row.get(_B_CODE_NAME, "").strip()
         m = _CODE_RE.match(code_name)
         if not m:
             return None
-
         code = m.group(1)
         name = m.group(2).strip()
         shares = self._parse_decimal(row.get(_B_SHARES, ""))
         avg_cost = self._parse_decimal(row.get(_B_AVG_COST, ""))
+        return self._build_holding(code, name, shares, avg_cost)
 
+    @staticmethod
+    def _build_holding(
+        code: str,
+        name: str,
+        shares: Optional[Decimal],
+        avg_cost: Optional[Decimal],
+    ) -> Optional[Holding]:
         if shares is None or avg_cost is None or shares == 0:
             return None
-
         return Holding(
             ticker=Ticker.from_sbi_code(code),
             name=name,
