@@ -14,8 +14,8 @@ class Holding:
     """
 
     ticker: Ticker
-    name: str          # Japanese company name from SBI CSV
-    shares: Decimal    # 保有数量
+    name: str  # Japanese company name from SBI CSV
+    shares: Decimal  # 保有数量
     average_cost: Money  # 平均取得単価 (per share)
 
     @property

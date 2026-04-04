@@ -16,6 +16,6 @@ class Ticker:
             raise ValueError("Ticker symbol cannot be empty")
 
     @classmethod
-    def from_sbi_code(cls, code: str) -> "Ticker":
+    def from_sbi_code(cls, code: str) -> Ticker:
         """Converts SBI 4-digit code to Yahoo Finance symbol."""
         return cls(f"{code.strip()}.T")

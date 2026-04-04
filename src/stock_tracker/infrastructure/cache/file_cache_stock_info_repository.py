@@ -1,8 +1,9 @@
 import json
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any
 
 from ...domain.entities.stock_info import StockInfo
 from ...domain.repositories.stock_info_repository import StockInfoRepository
@@ -27,7 +28,7 @@ class FileCacheStockInfoRepository(StockInfoRepository):
     def __init__(
         self,
         inner: StockInfoRepository,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         ttl_minutes: int = DEFAULT_TTL_MINUTES,
     ) -> None:
         self._inner = inner
@@ -69,7 +70,7 @@ class FileCacheStockInfoRepository(StockInfoRepository):
         safe_name = ticker.symbol.replace(".", "_")
         return self._cache_dir / f"{safe_name}.json"
 
-    def _load_cache(self, path: Path, ticker: Ticker) -> Optional[StockInfo]:
+    def _load_cache(self, path: Path, ticker: Ticker) -> StockInfo | None:
         if not path.exists():
             return None
         try:
@@ -94,13 +95,13 @@ class FileCacheStockInfoRepository(StockInfoRepository):
 
     @staticmethod
     def _serialize(info: StockInfo) -> dict[str, Any]:
-        def d(v: Optional[Decimal]) -> Optional[str]:
+        def d(v: Decimal | None) -> str | None:
             return str(v) if v is not None else None
 
-        def pct(v: Optional[Percentage]) -> Optional[str]:
+        def pct(v: Percentage | None) -> str | None:
             return str(v.value) if v is not None else None
 
-        def money(v: Optional[Money]) -> Optional[str]:
+        def money(v: Money | None) -> str | None:
             return str(v.amount) if v is not None else None
 
         return {
@@ -128,13 +129,13 @@ class FileCacheStockInfoRepository(StockInfoRepository):
 
     @staticmethod
     def _deserialize(data: dict[str, Any], ticker: Ticker) -> StockInfo:
-        def d(v: Optional[str]) -> Optional[Decimal]:
+        def d(v: str | None) -> Decimal | None:
             return Decimal(v) if v is not None else None
 
-        def pct(v: Optional[str]) -> Optional[Percentage]:
+        def pct(v: str | None) -> Percentage | None:
             return Percentage(Decimal(v)) if v is not None else None
 
-        def money(v: Optional[str]) -> Optional[Money]:
+        def money(v: str | None) -> Money | None:
             return Money(Decimal(v), Currency.JPY) if v is not None else None
 
         return StockInfo(
