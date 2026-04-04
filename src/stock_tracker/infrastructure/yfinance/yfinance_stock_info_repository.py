@@ -1,7 +1,8 @@
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Optional, Sequence
+from typing import Any
 
 import yfinance as yf
 
@@ -37,9 +38,7 @@ class YfinanceStockInfoRepository(StockInfoRepository):
     def fetch_many(self, tickers: Sequence[Ticker]) -> Sequence[StockInfo]:
         results: list[StockInfo] = []
         with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as executor:
-            future_to_ticker = {
-                executor.submit(self.fetch, t): t for t in tickers
-            }
+            future_to_ticker = {executor.submit(self.fetch, t): t for t in tickers}
             for future in as_completed(future_to_ticker):
                 try:
                     results.append(future.result())
@@ -79,7 +78,7 @@ class YfinanceStockInfoRepository(StockInfoRepository):
     @classmethod
     def _compute_dividend_yield(
         cls, yf_ticker: yf.Ticker, info: dict[str, Any]
-    ) -> Optional[Percentage]:
+    ) -> Percentage | None:
         """
         配当利回り = 年換算配当 ÷ 現在株価
 
@@ -99,24 +98,33 @@ class YfinanceStockInfoRepository(StockInfoRepository):
             if not price:
                 return None
 
-            now = datetime.now(tz=timezone.utc)
+            now = datetime.now(tz=UTC)
 
             # 過去24ヶ月以内に分割があれば、分割日以降のみ使用して年換算
             splits = yf_ticker.splits
             cutoff_2y = now - timedelta(days=730)
-            recent_splits = splits[splits.index >= cutoff_2y] if splits is not None and not splits.empty else None
+            recent_splits = (
+                splits[splits.index >= cutoff_2y]
+                if splits is not None and not splits.empty
+                else None
+            )
             if recent_splits is not None and not recent_splits.empty:
                 last_split_date = recent_splits.index[-1]
                 post_split = dividends[dividends.index > last_split_date]
 
                 if post_split.empty or post_split.sum() == 0:
-                    # 分割直後で実績なし → .dividends は調整済みのため 通常の12ヶ月ウィンドウにフォールバック
+                    # 分割直後で実績なし → .dividends は調整済みのため
+                    # 通常の12ヶ月ウィンドウにフォールバック
                     annual_div = cls._trailing_12m_div(dividends, now)
                 else:
                     days_since_split = (now - last_split_date).days
                     if days_since_split <= 0:
                         return None
-                    annual_div = Decimal(str(post_split.sum())) * Decimal(365) / Decimal(days_since_split)
+                    annual_div = (
+                        Decimal(str(post_split.sum()))
+                        * Decimal(365)
+                        / Decimal(days_since_split)
+                    )
             else:
                 annual_div = cls._trailing_12m_div(dividends, now)
 
@@ -128,7 +136,7 @@ class YfinanceStockInfoRepository(StockInfoRepository):
             return None
 
     @staticmethod
-    def _trailing_12m_div(dividends: Any, now: datetime) -> Optional[Decimal]:
+    def _trailing_12m_div(dividends: Any, now: datetime) -> Decimal | None:
         cutoff_1y = now - timedelta(days=365)
         trailing = dividends[dividends.index >= cutoff_1y]
         if trailing.empty:
@@ -136,7 +144,7 @@ class YfinanceStockInfoRepository(StockInfoRepository):
         return Decimal(str(trailing.sum()))
 
     @staticmethod
-    def _compute_equity_ratio(yf_ticker: yf.Ticker) -> Optional[Percentage]:
+    def _compute_equity_ratio(yf_ticker: yf.Ticker) -> Percentage | None:
         """
         自己資本比率 = 純資産 / 総資産
         Derived from balance_sheet DataFrame; most recent quarter is column 0.
@@ -165,7 +173,7 @@ class YfinanceStockInfoRepository(StockInfoRepository):
         return None
 
     @staticmethod
-    def _to_decimal(value: Any) -> Optional[Decimal]:
+    def _to_decimal(value: Any) -> Decimal | None:
         if value is None:
             return None
         try:
@@ -178,11 +186,11 @@ class YfinanceStockInfoRepository(StockInfoRepository):
             return None
 
     @classmethod
-    def _to_money(cls, value: Any) -> Optional[Money]:
+    def _to_money(cls, value: Any) -> Money | None:
         d = cls._to_decimal(value)
         return Money(d, Currency.JPY) if d is not None else None
 
     @classmethod
-    def _to_percentage(cls, value: Any) -> Optional[Percentage]:
+    def _to_percentage(cls, value: Any) -> Percentage | None:
         d = cls._to_decimal(value)
         return Percentage(d) if d is not None else None

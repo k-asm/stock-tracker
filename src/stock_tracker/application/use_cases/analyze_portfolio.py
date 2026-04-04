@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional, Sequence
 
 from ...domain.entities.holding import Holding
 from ...domain.entities.stock_info import StockInfo
@@ -12,7 +12,7 @@ from ..dtos.portfolio_row_dto import PortfolioRowDTO
 
 @dataclass
 class AnalyzePortfolioRequest:
-    source: str   # CSV file path
+    source: str  # CSV file path
 
 
 class AnalyzePortfolioUseCase:
@@ -39,8 +39,7 @@ class AnalyzePortfolioUseCase:
         holdings = self._holdings_repo.load(request.source)
         tickers = [h.ticker for h in holdings]
         stock_infos = {
-            si.ticker.symbol: si
-            for si in self._stock_info_repo.fetch_many(tickers)
+            si.ticker.symbol: si for si in self._stock_info_repo.fetch_many(tickers)
         }
 
         return [
@@ -48,13 +47,9 @@ class AnalyzePortfolioUseCase:
             for holding in holdings
         ]
 
-    def _build_row(
-        self, holding: Holding, info: Optional[StockInfo]
-    ) -> PortfolioRowDTO:
+    def _build_row(self, holding: Holding, info: StockInfo | None) -> PortfolioRowDTO:
         current_price = (
-            info.current_price.amount
-            if info and info.current_price
-            else None
+            info.current_price.amount if info and info.current_price else None
         )
         current_value = (
             holding.shares * current_price if current_price is not None else None
@@ -70,10 +65,10 @@ class AnalyzePortfolioUseCase:
             else None
         )
 
-        def pct(p: Optional[Percentage]) -> Optional[Decimal]:
+        def pct(p: Percentage | None) -> Decimal | None:
             return p.as_percent if p else None
 
-        def money_amount(m) -> Optional[Decimal]:
+        def money_amount(m) -> Decimal | None:
             return m.amount if m else None
 
         return PortfolioRowDTO(
@@ -100,7 +95,9 @@ class AnalyzePortfolioUseCase:
             current_ratio=info.current_ratio if info else None,
             equity_ratio_pct=pct(info.equity_ratio if info else None),
             market_cap=info.market_cap if info else None,
-            fifty_two_week_high=money_amount(info.fifty_two_week_high if info else None),
+            fifty_two_week_high=money_amount(
+                info.fifty_two_week_high if info else None
+            ),
             fifty_two_week_low=money_amount(info.fifty_two_week_low if info else None),
             beta=info.beta if info else None,
         )

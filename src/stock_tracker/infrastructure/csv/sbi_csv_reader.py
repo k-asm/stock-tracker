@@ -1,8 +1,8 @@
 import csv
 import re
+from collections.abc import Sequence
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Optional, Sequence
 
 from ...domain.entities.holding import Holding
 from ...domain.repositories.holdings_repository import HoldingsRepository
@@ -27,7 +27,7 @@ _A_SHARES = "保有数量"
 _A_AVG_COST = "平均取得単価"
 
 # Format B column names
-_B_CODE_NAME = "銘柄（コード）"   # "XXXX 銘柄名" combined
+_B_CODE_NAME = "銘柄（コード）"  # "XXXX 銘柄名" combined
 _B_SHARES = "数量"
 _B_AVG_COST = "取得単価"
 
@@ -82,25 +82,24 @@ class SbiCsvHoldingsRepository(HoldingsRepository):
         for encoding in _ENCODINGS:
             try:
                 return path.read_text(encoding=encoding)
-            except (UnicodeDecodeError, LookupError):
+            except UnicodeDecodeError, LookupError:
                 continue
         raise ValueError(
             f"Could not decode {path} with any of {_ENCODINGS}. "
             "Please check the file encoding."
         )
 
-    def _find_header_row(
-        self, lines: list[str]
-    ) -> tuple[Optional[int], Optional[str]]:
+    def _find_header_row(self, lines: list[str]) -> tuple[int | None, str | None]:
         for i, line in enumerate(lines):
-            # Check Format B before Format A: "銘柄コード" is a substring of "銘柄（コード）"
+            # Check Format B before Format A:
+            # "銘柄コード" is a substring of "銘柄（コード）"
             if _HEADER_FORMAT_B in line:
                 return i, "B"
             if _HEADER_FORMAT_A in line:
                 return i, "A"
         return None, None
 
-    def _parse_row_format_a(self, row: dict) -> Optional[Holding]:
+    def _parse_row_format_a(self, row: dict) -> Holding | None:
         code = row.get(_A_CODE, "").strip()
         if not code or not code.isdigit():
             return None
@@ -109,7 +108,7 @@ class SbiCsvHoldingsRepository(HoldingsRepository):
         avg_cost = self._parse_decimal(row.get(_A_AVG_COST, ""))
         return self._build_holding(code, name, shares, avg_cost)
 
-    def _parse_row_format_b(self, row: dict) -> Optional[Holding]:
+    def _parse_row_format_b(self, row: dict) -> Holding | None:
         code_name = row.get(_B_CODE_NAME, "").strip()
         m = _CODE_RE.match(code_name)
         if not m:
@@ -124,9 +123,9 @@ class SbiCsvHoldingsRepository(HoldingsRepository):
     def _build_holding(
         code: str,
         name: str,
-        shares: Optional[Decimal],
-        avg_cost: Optional[Decimal],
-    ) -> Optional[Holding]:
+        shares: Decimal | None,
+        avg_cost: Decimal | None,
+    ) -> Holding | None:
         if shares is None or avg_cost is None or shares == 0:
             return None
         return Holding(
@@ -137,7 +136,7 @@ class SbiCsvHoldingsRepository(HoldingsRepository):
         )
 
     @staticmethod
-    def _parse_decimal(value: str) -> Optional[Decimal]:
+    def _parse_decimal(value: str) -> Decimal | None:
         cleaned = (
             value.strip()
             .replace(",", "")

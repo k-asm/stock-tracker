@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 
 @dataclass
@@ -15,47 +14,47 @@ class PortfolioRowDTO:
     """
 
     # Identity
-    ticker_symbol: str    # "7203.T"
-    company_name: str     # トヨタ自動車
+    ticker_symbol: str  # "7203.T"
+    company_name: str  # トヨタ自動車
 
     # Holdings (from CSV)
     shares: Decimal
-    average_cost: Decimal          # 平均取得単価 (JPY)
-    total_cost: Decimal            # 評価額 簿価 (JPY)
+    average_cost: Decimal  # 平均取得単価 (JPY)
+    total_cost: Decimal  # 評価額 簿価 (JPY)
 
     # Live price
-    current_price: Optional[Decimal]
-    current_value: Optional[Decimal]    # shares × current_price
-    gain_loss: Optional[Decimal]        # current_value - total_cost
-    gain_loss_pct: Optional[Decimal]    # gain_loss / total_cost × 100
+    current_price: Decimal | None
+    current_value: Decimal | None  # shares × current_price
+    gain_loss: Decimal | None  # current_value - total_cost
+    gain_loss_pct: Decimal | None  # gain_loss / total_cost × 100
 
     # Valuation
-    trailing_pe: Optional[Decimal]
-    forward_pe: Optional[Decimal]
-    price_to_book: Optional[Decimal]
-    enterprise_to_ebitda: Optional[Decimal]
+    trailing_pe: Decimal | None
+    forward_pe: Decimal | None
+    price_to_book: Decimal | None
+    enterprise_to_ebitda: Decimal | None
 
     # Per-share
-    trailing_eps: Optional[Decimal]
-    book_value: Optional[Decimal]
+    trailing_eps: Decimal | None
+    book_value: Decimal | None
 
     # Yield / Returns (display as %, e.g. 2.5 means 2.5%)
-    dividend_yield_pct: Optional[Decimal]
-    return_on_equity_pct: Optional[Decimal]
-    payout_ratio_pct: Optional[Decimal]
+    dividend_yield_pct: Decimal | None
+    return_on_equity_pct: Decimal | None
+    payout_ratio_pct: Decimal | None
 
     # Margins (display as %)
-    operating_margins_pct: Optional[Decimal]
-    profit_margins_pct: Optional[Decimal]
+    operating_margins_pct: Decimal | None
+    profit_margins_pct: Decimal | None
 
     # Balance Sheet
-    current_ratio: Optional[Decimal]
-    equity_ratio_pct: Optional[Decimal]   # 自己資本比率
+    current_ratio: Decimal | None
+    equity_ratio_pct: Decimal | None  # 自己資本比率
 
     # Size / Range
-    market_cap: Optional[int]
-    fifty_two_week_high: Optional[Decimal]
-    fifty_two_week_low: Optional[Decimal]
+    market_cap: int | None
+    fifty_two_week_high: Decimal | None
+    fifty_two_week_low: Decimal | None
 
     # Additional
-    beta: Optional[Decimal]
+    beta: Decimal | None

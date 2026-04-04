@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from decimal import Decimal
-from typing import Optional, Sequence
 
 from rich import box
 from rich.console import Console
@@ -9,28 +9,26 @@ from rich.text import Text
 from ..application.dtos.portfolio_row_dto import PortfolioRowDTO
 
 
-def _fmt_decimal(
-    value: Optional[Decimal], decimals: int = 2, suffix: str = ""
-) -> Text:
+def _fmt_decimal(value: Decimal | None, decimals: int = 2, suffix: str = "") -> Text:
     if value is None:
         return Text("-", style="dim")
     return Text(f"{value:,.{decimals}f}{suffix}")
 
 
-def _fmt_money_jpy(value: Optional[Decimal]) -> Text:
+def _fmt_money_jpy(value: Decimal | None) -> Text:
     if value is None:
         return Text("-", style="dim")
     return Text(f"¥{value:,.0f}")
 
 
-def _fmt_market_cap(value: Optional[int]) -> Text:
+def _fmt_market_cap(value: int | None) -> Text:
     if value is None:
         return Text("-", style="dim")
     oku = value / 100_000_000
     return Text(f"{oku:,.0f}億")
 
 
-def _fmt_gain_loss(value: Optional[Decimal]) -> Text:
+def _fmt_gain_loss(value: Decimal | None) -> Text:
     if value is None:
         return Text("-", style="dim")
     sign = "+" if value >= 0 else ""
@@ -38,7 +36,7 @@ def _fmt_gain_loss(value: Optional[Decimal]) -> Text:
     return Text(f"{sign}{value:,.0f}", style=style)
 
 
-def _fmt_gain_loss_pct(value: Optional[Decimal]) -> Text:
+def _fmt_gain_loss_pct(value: Decimal | None) -> Text:
     if value is None:
         return Text("-", style="dim")
     sign = "+" if value >= 0 else ""
@@ -52,7 +50,7 @@ class RichTableRenderer:
     Only depends on PortfolioRowDTO — no domain types cross this boundary.
     """
 
-    def __init__(self, console: Optional[Console] = None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         self._console = console or Console()
 
     def render(self, rows: Sequence[PortfolioRowDTO]) -> None:
@@ -132,10 +130,10 @@ class RichTableRenderer:
         total_cost = sum(
             (r.total_cost for r in rows if r.total_cost is not None), Decimal(0)
         )
-        total_value_items = [r.current_value for r in rows if r.current_value is not None]
-        total_value = (
-            sum(total_value_items, Decimal(0)) if total_value_items else None
-        )
+        total_value_items = [
+            r.current_value for r in rows if r.current_value is not None
+        ]
+        total_value = sum(total_value_items, Decimal(0)) if total_value_items else None
         total_gain = total_value - total_cost if total_value is not None else None
         total_gain_pct = (
             total_gain / total_cost * Decimal("100")
@@ -159,6 +157,4 @@ class RichTableRenderer:
             )
         self._console.print(f"  銘柄数      : {len(rows)}銘柄")
         self._console.print()
-        self._console.print(
-            "[dim]* 現在値は前営業日終値の場合があります[/dim]"
-        )
+        self._console.print("[dim]* 現在値は前営業日終値の場合があります[/dim]")

@@ -39,7 +39,8 @@ console = Console()
     "--cache-dir",
     type=click.Path(file_okay=False),
     default=None,
-    help="キャッシュファイルの保存先ディレクトリ（デフォルト: ~/.cache/stock-tracker）。",
+    help="キャッシュファイルの保存先ディレクトリ"
+    "（デフォルト: ~/.cache/stock-tracker）。",
 )
 def main(csv_path: str, no_cache: bool, ttl: int, cache_dir: str | None) -> None:
     """
@@ -73,9 +74,7 @@ def main(csv_path: str, no_cache: bool, ttl: int, cache_dir: str | None) -> None
         stock_info_repo=stock_info_repo,
     )
 
-    with console.status(
-        "[bold green]Yahoo Finance からデータを取得中...[/bold green]"
-    ):
+    with console.status("[bold green]Yahoo Finance からデータを取得中...[/bold green]"):
         try:
             rows = use_case.execute(AnalyzePortfolioRequest(source=csv_path))
         except FileNotFoundError as e:

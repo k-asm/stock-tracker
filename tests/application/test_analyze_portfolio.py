@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Sequence
 from unittest.mock import MagicMock
 
 from stock_tracker.application.use_cases.analyze_portfolio import (
