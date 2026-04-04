@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest*)",
+      "Bash(python -m pytest*)",
+      "Bash(python -m stock_tracker*)",
+      "Bash(stock-tracker *)",
+      "Bash(rm -rf ~/.cache/stock-tracker/)"
+    ]
+  }
+}
