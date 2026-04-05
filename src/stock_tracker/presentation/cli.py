@@ -15,6 +15,7 @@ from ..infrastructure.csv.sbi_csv_reader import SbiCsvHoldingsRepository
 from ..infrastructure.yfinance.yfinance_stock_info_repository import (
     YfinanceStockInfoRepository,
 )
+from .json_renderer import JsonRenderer
 from .rich_table_renderer import RichTableRenderer
 
 console = Console()
@@ -42,7 +43,21 @@ console = Console()
     help="キャッシュファイルの保存先ディレクトリ"
     "（デフォルト: ~/.cache/stock-tracker）。",
 )
-def main(csv_path: str, no_cache: bool, ttl: int, cache_dir: str | None) -> None:
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json"], case_sensitive=False),
+    default="table",
+    show_default=True,
+    help="出力フォーマット。json を指定すると全指標を JSON で標準出力する。",
+)
+def main(
+    csv_path: str,
+    no_cache: bool,
+    ttl: int,
+    cache_dir: str | None,
+    output_format: str,
+) -> None:
     """
     SBI証券の保有証券一覧CSVを読み込み、財務指標を一覧表示します。
 
@@ -74,7 +89,12 @@ def main(csv_path: str, no_cache: bool, ttl: int, cache_dir: str | None) -> None
         stock_info_repo=stock_info_repo,
     )
 
-    with console.status("[bold green]Yahoo Finance からデータを取得中...[/bold green]"):
+    if output_format == "json":
+        renderer = JsonRenderer()
+    else:
+        renderer = RichTableRenderer(console=console)
+
+    with renderer.status("[bold green]Yahoo Finance からデータを取得中...[/bold green]"):
         try:
             rows = use_case.execute(AnalyzePortfolioRequest(source=csv_path))
         except FileNotFoundError as e:
@@ -87,5 +107,4 @@ def main(csv_path: str, no_cache: bool, ttl: int, cache_dir: str | None) -> None
             console.print(f"[red]予期しないエラーが発生しました: {e}[/red]")
             sys.exit(1)
 
-    renderer = RichTableRenderer(console=console)
     renderer.render(rows)

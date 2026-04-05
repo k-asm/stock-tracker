@@ -53,6 +53,9 @@ class RichTableRenderer:
     def __init__(self, console: Console | None = None) -> None:
         self._console = console or Console()
 
+    def status(self, message: str):
+        return self._console.status(message)
+
     def render(self, rows: Sequence[PortfolioRowDTO]) -> None:
         if not rows:
             self._console.print("[yellow]保有銘柄が見つかりませんでした。[/yellow]")
