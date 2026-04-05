@@ -94,7 +94,9 @@ def main(
     else:
         renderer = RichTableRenderer(console=console)
 
-    with renderer.status("[bold green]Yahoo Finance からデータを取得中...[/bold green]"):
+    with renderer.status(
+        "[bold green]Yahoo Finance からデータを取得中...[/bold green]"
+    ):
         try:
             rows = use_case.execute(AnalyzePortfolioRequest(source=csv_path))
         except FileNotFoundError as e:
